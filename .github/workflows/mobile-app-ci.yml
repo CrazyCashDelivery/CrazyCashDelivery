@@ -38,7 +38,6 @@ permissions:
 
 jobs:
   validate:
-    if: hashFiles('package.json') != ''
     name: Install, QA, and TypeScript check
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -51,19 +50,28 @@ jobs:
         with:
           node-version: 22
 
+      - name: Wait for app source package
+        if: hashFiles('package.json') == ''
+        run: echo "Mobile source is not in this branch yet; CI checks will run when package.json is added."
+
       - name: Install dependencies and generate lockfile
+        if: hashFiles('package.json') != ''
         run: npm install --no-audit --no-fund --fetch-retries=2 --fetch-timeout=60000
 
       - name: Run source QA
+        if: hashFiles('package.json') != ''
         run: npm run qa
 
       - name: Run full TypeScript typecheck
+        if: hashFiles('package.json') != ''
         run: npm run typecheck
 
       - name: Check Expo project health
+        if: hashFiles('package.json') != ''
         run: npx --yes expo-doctor
 
       - name: Verify Expo bundles
+        if: hashFiles('package.json') != ''
         run: npx expo export --platform all
 
       - name: Preserve CI evidence
