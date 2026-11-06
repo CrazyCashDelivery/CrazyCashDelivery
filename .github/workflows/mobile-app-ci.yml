@@ -1,0 +1,77 @@
+name: Crazy Cash Delivery mobile app checks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [mobile-app-work]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'constants/**'
+      - 'lib/**'
+      - 'scripts/**'
+      - 'supabase/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'app.json'
+      - 'eas.json'
+      - '.github/workflows/mobile-app-ci.yml'
+  pull_request:
+    branches: [mobile-app-work]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'constants/**'
+      - 'lib/**'
+      - 'scripts/**'
+      - 'supabase/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'app.json'
+      - 'eas.json'
+      - '.github/workflows/mobile-app-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Install, QA, and TypeScript check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies and generate lockfile
+        run: npm install --no-audit --no-fund --fetch-retries=2 --fetch-timeout=60000
+
+      - name: Run source QA
+        run: npm run qa
+
+      - name: Run full TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Check Expo project health
+        run: npx --yes expo-doctor
+
+      - name: Verify Expo bundles
+        run: npx expo export --platform all
+
+      - name: Preserve CI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crazy-cash-delivery-ci-evidence
+          if-no-files-found: warn
+          path: |
+            package-lock.json
+            BUILD_READINESS_REPORT.md
+            dist/
