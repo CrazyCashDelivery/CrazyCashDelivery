@@ -80,11 +80,24 @@ jobs:
       - name: Check Expo project health
         run: npx --yes expo-doctor
 
-      - name: Install Expo web export dependency
-        run: npx expo install react-native-web
+      - name: Install SDK 54-compatible web dependencies
+        run: npm install --save-exact react-dom@19.1.0 react-native-web@0.21.0 --no-audit --no-fund
 
       - name: Verify Expo bundles
         run: npx expo export --platform all
+
+      - name: Package corrected source archive
+        run: |
+          zip -qr /tmp/Crazy_Cash_Delivery_GitHub_Ready_Corrected.zip . \
+            -x ".git/*" "node_modules/*" "dist/*" "*.zip" "*/.DS_Store"
+
+      - name: Preserve corrected source archive
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crazy-cash-delivery-corrected-source
+          path: /tmp/Crazy_Cash_Delivery_GitHub_Ready_Corrected.zip
+          if-no-files-found: error
 
       - name: Preserve CI evidence
         if: always()
@@ -93,6 +106,7 @@ jobs:
           name: crazy-cash-delivery-ci-evidence
           if-no-files-found: warn
           path: |
+            package.json
             package-lock.json
             BUILD_READINESS_REPORT.md
             dist/
