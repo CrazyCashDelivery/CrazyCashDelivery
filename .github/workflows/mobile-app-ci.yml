@@ -16,6 +16,8 @@ on:
       - 'tsconfig.json'
       - 'app.json'
       - 'eas.json'
+      - '*.zip'
+      - '**/*.zip'
       - '.github/workflows/mobile-app-ci.yml'
   pull_request:
     branches: [mobile-app-work]
@@ -31,6 +33,8 @@ on:
       - 'tsconfig.json'
       - 'app.json'
       - 'eas.json'
+      - '*.zip'
+      - '**/*.zip'
       - '.github/workflows/mobile-app-ci.yml'
 
 permissions:
@@ -50,28 +54,33 @@ jobs:
         with:
           node-version: 22
 
+      - name: Extract uploaded project archive
+        if: hashFiles('package.json') == '' && hashFiles('*.zip') != ''
+        run: |
+          archive="$(find . -maxdepth 1 -type f -name '*.zip' -print -quit)"
+          mkdir -p /tmp/ccd-source
+          unzip -q "$archive" -d /tmp/ccd-source
+          cp -a /tmp/ccd-source/. .
+
       - name: Wait for app source package
         if: hashFiles('package.json') == ''
-        run: echo "Mobile source is not in this branch yet; CI checks will run when package.json is added."
+        run: |
+          echo "Mobile source package.json is missing. Upload Crazy_Cash_Delivery_GitHub_Ready.zip to this branch root."
+          exit 1
 
       - name: Install dependencies and generate lockfile
-        if: hashFiles('package.json') != ''
         run: npm install --no-audit --no-fund --fetch-retries=2 --fetch-timeout=60000
 
       - name: Run source QA
-        if: hashFiles('package.json') != ''
         run: npm run qa
 
       - name: Run full TypeScript typecheck
-        if: hashFiles('package.json') != ''
         run: npm run typecheck
 
       - name: Check Expo project health
-        if: hashFiles('package.json') != ''
         run: npx --yes expo-doctor
 
       - name: Verify Expo bundles
-        if: hashFiles('package.json') != ''
         run: npx expo export --platform all
 
       - name: Preserve CI evidence
