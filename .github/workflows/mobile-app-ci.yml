@@ -80,6 +80,9 @@ jobs:
       - name: Check Expo project health
         run: npx --yes expo-doctor
 
+      - name: Install Expo web export dependency
+        run: npx expo install react-native-web
+
       - name: Verify Expo bundles
         run: npx expo export --platform all
 
