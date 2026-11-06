@@ -38,6 +38,7 @@ permissions:
 
 jobs:
   validate:
+    if: hashFiles('package.json') != ''
     name: Install, QA, and TypeScript check
     runs-on: ubuntu-latest
     timeout-minutes: 25
